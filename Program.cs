@@ -66,6 +66,9 @@ namespace Trackstar.Api
 
             app.MapControllers();
 
+            // default route to check if API is running
+            app.MapGet("/", () => Results.Ok(new { status = "API is running" }));
+
             app.Run();
         }
     }
