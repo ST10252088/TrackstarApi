@@ -37,5 +37,32 @@ namespace Trackstar.Api.Controllers
             project["id"] = id;
             return Ok(project);
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateProject(string id, [FromBody] Dictionary<string, object> updates)
+        {
+            if (updates == null || updates.Count == 0)
+                return BadRequest(new { message = "No updates provided" });
+
+            var ok = await _firestore.UpdateProjectAsync(id, updates);
+            if (!ok) return NotFound();
+            return Ok(new { updated = true });
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProject(string id)
+        {
+            var ok = await _firestore.DeleteProjectAsync(id);
+            if (!ok) return NotFound();
+            return NoContent();
+        }
+
+        [HttpPost("{id}/assign-user")]
+        public async Task<IActionResult> AssignUser(string id, [FromBody] AssignUserDto dto)
+        {
+            var ok = await _firestore.AssignUserToProjectAsync(id, dto.UserUid);
+            if (!ok) return NotFound();
+            return Ok(new { message = "User assigned successfully" });
+        }
     }
 }

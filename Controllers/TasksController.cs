@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Trackstar.Api.DTOs;
 using Trackstar.Api.Services;
+using Google.Cloud.Firestore;
 
 namespace Trackstar.Api.Controllers
 {
@@ -21,20 +22,45 @@ namespace Trackstar.Api.Controllers
             return Ok(tasks);
         }
 
+        [HttpGet("{taskId}")]
+        public async Task<IActionResult> GetTaskById(string projectId, string taskId)
+        {
+            var task = await _firestore.GetTaskByIdAsync(projectId, taskId);
+            if (task == null) return NotFound();
+            task["id"] = taskId;
+            return Ok(task);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateTask(string projectId, [FromBody] TaskCreateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var id = await _firestore.CreateTaskAsync(projectId, dto.Title, dto.Description);
-            return CreatedAtAction(nameof(GetTasks), new { projectId }, new { id });
+
+            var data = new Dictionary<string, object>
+            {
+                ["name"] = dto.Name,
+                ["description"] = dto.Description ?? "",
+                ["assignedTo"] = dto.AssignedTo,
+                ["colorStatus"] = dto.ColorStatus,
+                ["status"] = dto.Status,
+                ["dueDate"] = Timestamp.FromDateTime(dto.DueDate.ToUniversalTime())
+            };
+
+            var id = await _firestore.CreateTaskAsync(projectId, data);
+            return CreatedAtAction(nameof(GetTaskById), new { projectId, taskId = id }, new { id });
         }
 
         [HttpPut("{taskId}")]
         public async Task<IActionResult> UpdateTask(string projectId, string taskId, [FromBody] TaskUpdateDto dto)
         {
             var updates = new Dictionary<string, object>();
-            if (dto.Title != null) updates["title"] = dto.Title;
+            if (dto.Name != null) updates["name"] = dto.Name;
             if (dto.Description != null) updates["description"] = dto.Description;
+            if (dto.AssignedTo != null) updates["assignedTo"] = dto.AssignedTo;
+            if (dto.ColorStatus != null) updates["colorStatus"] = dto.ColorStatus;
+            if (dto.Status != null) updates["status"] = dto.Status;
+            if (dto.DueDate.HasValue)
+                updates["dueDate"] = Timestamp.FromDateTime(dto.DueDate.Value.ToUniversalTime());
 
             if (updates.Count == 0)
                 return BadRequest(new { message = "No fields to update" });
