@@ -16,6 +16,18 @@ namespace Trackstar.Api.Services
 
         // --- USERS ---
 
+        public async Task<bool> UpdateUserAsync(string id, Dictionary<string, object> updates)
+        {
+            var userRef = _db.Collection("users").Document(id);
+            var doc = await userRef.GetSnapshotAsync();
+
+            if (!doc.Exists)
+                return false;
+
+            await userRef.UpdateAsync(updates);
+            return true;
+        }
+
         public async Task<List<Dictionary<string, object>>> GetAllUsersAsync()
         {
             var snapshot = await _db.Collection("users").GetSnapshotAsync();

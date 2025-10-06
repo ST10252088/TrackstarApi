@@ -15,6 +15,7 @@ namespace Trackstar.Api.Controllers
             _firestore = firestore;
         }
 
+        // Gets all tasks
         [HttpGet]
         public async Task<IActionResult> GetTasks(string projectId)
         {
@@ -22,6 +23,7 @@ namespace Trackstar.Api.Controllers
             return Ok(tasks);
         }
 
+        // Get task by id
         [HttpGet("{taskId}")]
         public async Task<IActionResult> GetTaskById(string projectId, string taskId)
         {
@@ -31,6 +33,7 @@ namespace Trackstar.Api.Controllers
             return Ok(task);
         }
 
+        // Creates a task
         [HttpPost]
         public async Task<IActionResult> CreateTask(string projectId, [FromBody] TaskCreateDto dto)
         {
@@ -50,6 +53,7 @@ namespace Trackstar.Api.Controllers
             return CreatedAtAction(nameof(GetTaskById), new { projectId, taskId = id }, new { id });
         }
 
+        // Edits or updates a task by id
         [HttpPut("{taskId}")]
         public async Task<IActionResult> UpdateTask(string projectId, string taskId, [FromBody] TaskUpdateDto dto)
         {
@@ -70,6 +74,7 @@ namespace Trackstar.Api.Controllers
             return Ok(new { updated = true });
         }
 
+        // deletes a task by id
         [HttpDelete("{taskId}")]
         public async Task<IActionResult> DeleteTask(string projectId, string taskId)
         {

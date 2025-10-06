@@ -14,6 +14,7 @@ namespace Trackstar.Api.Controllers
             _firestore = firestore;
         }
 
+        // Retrieves all projects from database
         [HttpGet]
         public async Task<IActionResult> GetAllProjects()
         {
@@ -21,6 +22,7 @@ namespace Trackstar.Api.Controllers
             return Ok(projects);
         }
 
+        // Creates a new project
         [HttpPost]
         public async Task<IActionResult> CreateProject([FromBody] ProjectCreateDto dto)
         {
@@ -29,6 +31,7 @@ namespace Trackstar.Api.Controllers
             return CreatedAtAction(nameof(GetProjectById), new { id }, new { id });
         }
 
+        // Retrieves a specific project by Id
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProjectById(string id)
         {
@@ -38,6 +41,7 @@ namespace Trackstar.Api.Controllers
             return Ok(project);
         }
 
+        // Edits a specific project by Id
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProject(string id, [FromBody] Dictionary<string, object> updates)
         {
@@ -49,6 +53,7 @@ namespace Trackstar.Api.Controllers
             return Ok(new { updated = true });
         }
 
+        // Deletes a specific Project by Id
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProject(string id)
         {
@@ -57,6 +62,7 @@ namespace Trackstar.Api.Controllers
             return NoContent();
         }
 
+        // Assigns a user to a project accepting the project Id and the user uid
         [HttpPost("{id}/assign-user")]
         public async Task<IActionResult> AssignUser(string id, [FromBody] AssignUserDto dto)
         {

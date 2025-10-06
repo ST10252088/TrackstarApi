@@ -13,6 +13,21 @@ namespace Trackstar.Api.Controllers
             _firestore = firestore;
         }
 
+        // Updating User
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUser(string id, [FromBody] Dictionary<string, object> updates)
+        {
+            if (updates == null || updates.Count == 0)
+                return BadRequest(new { message = "No updates provided." });
+
+            var ok = await _firestore.UpdateUserAsync(id, updates);
+            if (!ok)
+                return NotFound(new { message = "User not found." });
+
+            return Ok(new { message = "User updated successfully." });
+        }
+
+        // Reading all users from database
         [HttpGet]
         public async Task<IActionResult> GetAllUsers()
         {
@@ -20,6 +35,7 @@ namespace Trackstar.Api.Controllers
             return Ok(users);
         }
 
+        // reading one user by id
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserById(string id)
         {
