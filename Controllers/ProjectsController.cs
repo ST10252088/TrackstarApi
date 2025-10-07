@@ -43,15 +43,25 @@ namespace Trackstar.Api.Controllers
 
         // Edits a specific project by Id
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProject(string id, [FromBody] Dictionary<string, object> updates)
+        public async Task<IActionResult> UpdateProject(string id, [FromBody] ProjectUpdateDto dto)
         {
-            if (updates == null || updates.Count == 0)
-                return BadRequest(new { message = "No updates provided" });
+            if (dto == null) return BadRequest(new { message = "Invalid request body." });
+
+            var updates = new Dictionary<string, object>();
+            if (dto.Name != null) updates["name"] = dto.Name;
+            if (dto.Description != null) updates["description"] = dto.Description;
+            if (dto.MemberUids != null) updates["memberUids"] = dto.MemberUids;
+
+            if (updates.Count == 0)
+                return BadRequest(new { message = "No fields provided for update." });
 
             var ok = await _firestore.UpdateProjectAsync(id, updates);
-            if (!ok) return NotFound();
-            return Ok(new { updated = true });
+            if (!ok)
+                return NotFound(new { message = "Project not found." });
+
+            return Ok(new { message = "Project updated successfully." });
         }
+
 
         // Deletes a specific Project by Id
         [HttpDelete("{id}")]
