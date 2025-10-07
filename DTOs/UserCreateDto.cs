@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Trackstar.Api.DTOs;
 
 public class UserCreateDto
 {
@@ -14,4 +15,6 @@ public class UserCreateDto
     public string? Phone { get; set; }
     public string? SignInMethod { get; set; }
     public string? Uid { get; set; }
+
+    public UserPreferencesDto? Preferences { get; set; }
 }

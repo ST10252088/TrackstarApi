@@ -21,5 +21,7 @@ namespace Trackstar.Api.DTOs
 
         [StringLength(100)]
         public string? Uid { get; set; }
+
+        public UserPreferencesDto? Preferences { get; set; }
     }
 }

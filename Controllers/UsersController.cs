@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Trackstar.Api.Services;
 using Trackstar.Api.DTOs;
+using Google.Cloud.Firestore;
 
 namespace Trackstar.Api.Controllers
 {
@@ -9,16 +10,21 @@ namespace Trackstar.Api.Controllers
     public class UsersController : ControllerBase
     {
         private readonly FirestoreService _firestore;
+
         public UsersController(FirestoreService firestore)
         {
             _firestore = firestore;
         }
-        // --- CREATE ---
+
+        // --- CREATE USER ---
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] UserCreateDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            // Apply defaults if preferences not provided
+            var prefs = dto.Preferences ?? new UserPreferencesDto();
 
             var data = new Dictionary<string, object>
             {
@@ -27,14 +33,20 @@ namespace Trackstar.Api.Controllers
                 ["surname"] = dto.Surname,
                 ["phone"] = dto.Phone ?? "",
                 ["signInMethod"] = dto.SignInMethod ?? "",
-                ["uid"] = dto.Uid ?? ""
+                ["uid"] = dto.Uid ?? "",
+                ["preferences"] = new Dictionary<string, object>
+                {
+                    ["language"] = prefs.Language ?? "en",
+                    ["theme"] = prefs.Theme ?? "light"
+                },
+                ["createdAt"] = Timestamp.GetCurrentTimestamp()
             };
 
             var id = await _firestore.CreateUserAsync(data);
             return CreatedAtAction(nameof(GetUserById), new { id }, new { id });
         }
 
-        // --- UPDATE ---
+        // --- UPDATE USER ---
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(string id, [FromBody] UserUpdateDto dto)
         {
@@ -50,6 +62,17 @@ namespace Trackstar.Api.Controllers
             if (dto.SignInMethod != null) updates["signInMethod"] = dto.SignInMethod;
             if (dto.Uid != null) updates["uid"] = dto.Uid;
 
+            // Preferences editing support
+            if (dto.Preferences != null)
+            {
+                var prefsUpdate = new Dictionary<string, object>
+                {
+                    ["language"] = dto.Preferences.Language ?? "en",
+                    ["theme"] = dto.Preferences.Theme ?? "light"
+                };
+                updates["preferences"] = prefsUpdate;
+            }
+
             if (updates.Count == 0)
                 return BadRequest(new { message = "No fields provided for update." });
 
@@ -60,25 +83,19 @@ namespace Trackstar.Api.Controllers
             return Ok(new { message = "User updated successfully." });
         }
 
-        // READ ALL USERS
-        [HttpGet]
-        public async Task<IActionResult> GetAllUsers()
-        {
-            var users = await _firestore.GetAllUsersAsync();
-            return Ok(users);
-        }
-
-        // reading one user by id
+        // --- READ USER ---
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserById(string id)
         {
             var user = await _firestore.GetUserByIdAsync(id);
-            if (user == null) return NotFound();
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+
             user["id"] = id;
             return Ok(user);
         }
 
-        // --- DELETE ---
+        // --- DELETE USER ---
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
@@ -86,7 +103,7 @@ namespace Trackstar.Api.Controllers
             if (!ok)
                 return NotFound(new { message = "User not found." });
 
-            return NoContent();
+            return Ok(new { message = "User deleted successfully." });
         }
     }
 }

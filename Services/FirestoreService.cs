@@ -16,19 +16,7 @@ namespace Trackstar.Api.Services
 
         // --- USERS ---
 
-        // Edit User by Id
-        public async Task<bool> UpdateUserAsync(string id, Dictionary<string, object> updates)
-        {
-            var userRef = _db.Collection("users").Document(id);
-            var doc = await userRef.GetSnapshotAsync();
-
-            if (!doc.Exists)
-                return false;
-
-            await userRef.UpdateAsync(updates);
-            return true;
-        }
-
+       
         // Get All Users
         public async Task<List<Dictionary<string, object>>> GetAllUsersAsync()
         {
@@ -50,17 +38,26 @@ namespace Trackstar.Api.Services
             return doc.Exists ? doc.ToDictionary() : null;
         }
 
-        // Create a new user
+        // creating user
         public async Task<string> CreateUserAsync(Dictionary<string, object> userData)
         {
-            // Generate new document reference
-            var docRef = _db.Collection("users").Document();
-
-            // Add a timestamp
-            userData["createdAt"] = Timestamp.GetCurrentTimestamp();
+            var docRef = _db.Collection("users").Document(userData.ContainsKey("uid") ? userData["uid"].ToString() : null);
+            if (docRef == null)
+                docRef = _db.Collection("users").Document();
 
             await docRef.SetAsync(userData);
             return docRef.Id;
+        }
+
+        // Update a user
+        public async Task<bool> UpdateUserAsync(string id, Dictionary<string, object> updates)
+        {
+            var userRef = _db.Collection("users").Document(id);
+            var doc = await userRef.GetSnapshotAsync();
+            if (!doc.Exists) return false;
+
+            await userRef.UpdateAsync(updates);
+            return true;
         }
 
         // Delete a user
