@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Google.Cloud.Firestore;
+using Microsoft.AspNetCore.Mvc;
 using Trackstar.Api.DTOs;
+using Trackstar.Api.Models;
 using Trackstar.Api.Services;
 
 namespace Trackstar.Api.Controllers
@@ -9,9 +11,11 @@ namespace Trackstar.Api.Controllers
     public class ProjectsController : ControllerBase
     {
         private readonly FirestoreService _firestore;
-        public ProjectsController(FirestoreService firestore)
+        private readonly FirestoreDb _db;
+        public ProjectsController(FirestoreService firestore, FirestoreDb db)
         {
             _firestore = firestore;
+            _db = db;
         }
 
         // Retrieves all projects from database
@@ -73,12 +77,69 @@ namespace Trackstar.Api.Controllers
         }
 
         // Assigns a user to a project accepting the project Id and the user uid
-        [HttpPost("{id}/assign-user")]
-        public async Task<IActionResult> AssignUser(string id, [FromBody] AssignUserDto dto)
+        [HttpPost("{id}/{email}/assign-user")]
+        public async Task<IActionResult> AssignUser(string id, string email)
         {
-            var ok = await _firestore.AssignUserToProjectAsync(id, dto.UserUid);
+            var ok = await _firestore.AssignUserToProjectAsync(id, email);
             if (!ok) return NotFound();
             return Ok(new { message = "User assigned successfully" });
         }
+
+        // Finds all projects and their tasks for a specific user by uid
+        [HttpGet("user/projects/tasks/{uid}")]
+        public async Task<IActionResult> GetProjectsAndTasksByUid(string uid)
+        {
+            var projectsRef = _db.Collection("projects");
+            var projectsQuery = projectsRef.WhereArrayContains("memberUids", uid);
+            var projectsSnapshot = await projectsQuery.GetSnapshotAsync();
+
+            var projects = new List<ProjectAndTasksModel>();
+
+            foreach (var projectDoc in projectsSnapshot.Documents)
+            {
+                var project = projectDoc.ConvertTo<ProjectAndTasksModel>();
+                project.Id = projectDoc.Id;
+
+                // Fetch tasks
+                var tasksSnapshot = await projectsRef
+                    .Document(projectDoc.Id)
+                    .Collection("tasks")
+                    .GetSnapshotAsync();
+
+                project.Tasks = tasksSnapshot.Documents.Select(taskDoc =>
+                {
+                    var task = taskDoc.ConvertTo<TaskModel>();
+                    task.Id = taskDoc.Id;
+                    task.ProjectId = projectDoc.Id;
+                    return task;
+                }).ToList();
+
+                // Fetch user details for each member UID
+                var members = new List<UserInfoModel>();
+                foreach (var memberUid in project.MemberUids)
+                {
+                    var userDoc = await _db.Collection("users").Document(memberUid).GetSnapshotAsync();
+                    if (userDoc.Exists)
+                    {
+                        members.Add(new UserInfoModel
+                        {
+                            Uid = memberUid,
+                            FirstName = userDoc.ContainsField("firstName") ? userDoc.GetValue<string>("firstName") : "",
+                            Surname = userDoc.ContainsField("surname") ? userDoc.GetValue<string>("surname") : "",
+                            Email = userDoc.ContainsField("email") ? userDoc.GetValue<string>("email") : ""
+                        });
+                    }
+                }
+
+                project.Members = members;
+                projects.Add(project);
+            }
+
+            return Ok(projects);
+        }
+
+
+
+
     }
 }

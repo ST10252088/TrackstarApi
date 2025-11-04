@@ -132,22 +132,39 @@ namespace Trackstar.Api.Services
             return true;
         }
 
-        public async Task<bool> AssignUserToProjectAsync(string projectId, string userUid)
+        public async Task<bool> AssignUserToProjectAsync(string projectId, string userEmail)
         {
             var projectRef = _db.Collection("projects").Document(projectId);
             var snapshot = await projectRef.GetSnapshotAsync();
-            if (!snapshot.Exists) return false;
 
+            if (!snapshot.Exists)
+                return false;
+
+            // Query the user document by email
+            var userQuery = await _db.Collection("users")
+                .WhereEqualTo("email", userEmail)
+                .GetSnapshotAsync();
+
+            if (!userQuery.Documents.Any())
+                return false; // user not found
+
+            var userDoc = userQuery.Documents.First();
+            var userUid = userDoc.Id;
+
+            // Get current members (if any)
             var members = snapshot.ContainsField("memberUids")
                 ? snapshot.GetValue<List<string>>("memberUids")
                 : new List<string>();
 
+            // Add the user if not already a member
             if (!members.Contains(userUid))
                 members.Add(userUid);
 
+            // Update the project document
             await projectRef.UpdateAsync("memberUids", members);
             return true;
         }
+
 
         // --- TASKS ---
 
