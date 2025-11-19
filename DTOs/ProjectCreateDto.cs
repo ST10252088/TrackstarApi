@@ -5,6 +5,9 @@ namespace Trackstar.Api.DTOs
     public class ProjectCreateDto
     {
         [Required]
+        public string? UID { get; set; }
+
+        [Required]
         [StringLength(150)]
         public string Name { get; set; } = null!;
 

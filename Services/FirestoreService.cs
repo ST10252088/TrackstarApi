@@ -75,19 +75,21 @@ namespace Trackstar.Api.Services
 
         // --- PROJECTS ---
 
-        public async Task<string> CreateProjectAsync(string name, string? description)
+        public async Task<string> CreateProjectAsync(string name, string? description, List<string> memberUids)
         {
             var docRef = _db.Collection("projects").Document();
-            var data = new Dictionary<string, object>
+            var project = new
             {
-                ["name"] = name,
-                ["description"] = description ?? "",
-                ["createdAt"] = Timestamp.GetCurrentTimestamp(),
-                ["memberUids"] = new List<string>()
+                Name = name,
+                Description = description,
+                MemberUids = memberUids,
+                CreatedAt = Timestamp.GetCurrentTimestamp() // Firestore timestamp
             };
-            await docRef.SetAsync(data);
+
+            await docRef.SetAsync(project);
             return docRef.Id;
         }
+
 
         /// <summary>
         /// Returns a list of all projects. Each project's Dictionary will include an "id" key.
@@ -163,6 +165,26 @@ namespace Trackstar.Api.Services
             // Update the project document
             await projectRef.UpdateAsync("memberUids", members);
             return true;
+        }
+
+        // Returns all projects where the specified UID is a member.
+        // Each project's Dictionary includes an "id" key.
+        public async Task<List<Dictionary<string, object>>> GetProjectsByMemberUidAsync(string uid)
+        {
+            var projectsQuery = _db.Collection("projects")
+                                   .WhereArrayContains("memberUids", uid);
+
+            var snapshot = await projectsQuery.GetSnapshotAsync();
+            var projects = new List<Dictionary<string, object>>();
+
+            foreach (var doc in snapshot.Documents)
+            {
+                var dict = doc.ToDictionary();
+                dict["id"] = doc.Id;
+                projects.Add(dict);
+            }
+
+            return projects;
         }
 
 
