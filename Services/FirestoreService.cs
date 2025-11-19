@@ -80,10 +80,10 @@ namespace Trackstar.Api.Services
             var docRef = _db.Collection("projects").Document();
             var project = new
             {
-                Name = name,
-                Description = description,
-                MemberUids = memberUids,
-                CreatedAt = Timestamp.GetCurrentTimestamp() // Firestore timestamp
+                name = name,
+                description = description,
+                memberUids = memberUids,
+                createdAt = Timestamp.GetCurrentTimestamp() // Firestore timestamp
             };
 
             await docRef.SetAsync(project);
@@ -181,11 +181,43 @@ namespace Trackstar.Api.Services
             {
                 var dict = doc.ToDictionary();
                 dict["id"] = doc.Id;
+
+                // Read member UIDs
+                if (dict.TryGetValue("memberUids", out var memberUidObj)
+                    && memberUidObj is IEnumerable<object> memberUidList)
+                {
+                    var memberDetails = new List<Dictionary<string, object>>();
+
+                    foreach (var memberUid in memberUidList.Cast<string>())
+                    {
+                        var userDoc = await _db.Collection("users")
+                                               .Document(memberUid)
+                                               .GetSnapshotAsync();
+
+                        if (userDoc.Exists)
+                        {
+                            var userDict = userDoc.ToDictionary();
+                            userDict["uid"] = userDoc.Id;
+
+                            // Optionally rename keys if needed
+                            memberDetails.Add(new Dictionary<string, object>
+                    {
+                        { "uid", userDoc.Id },
+                        { "fullName", $"{userDict.GetValueOrDefault("firstName", "")} {userDict.GetValueOrDefault("surname", "")}".Trim() },
+                        { "email", userDict.GetValueOrDefault("email", "") }
+                    });
+                        }
+                    }
+
+                    dict["members"] = memberDetails;
+                }
+
                 projects.Add(dict);
             }
 
             return projects;
         }
+
 
 
         // --- TASKS ---

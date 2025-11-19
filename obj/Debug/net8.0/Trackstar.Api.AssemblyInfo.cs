@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Trackstar.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fe07e482ab1d6243e88dda32afe973e44aafc2e5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+40d855fe8483a42272346caa1b1c065266a00351")]
 [assembly: System.Reflection.AssemblyProductAttribute("Trackstar.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Trackstar.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
