@@ -30,10 +30,18 @@ namespace Trackstar.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateProject([FromBody] ProjectCreateDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var id = await _firestore.CreateProjectAsync(dto.Name, dto.Description);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Add the creator UID to memberUids
+            var memberUids = new List<string> { dto.UID };
+
+            // Pass name, description, and memberUids to Firestore
+            var id = await _firestore.CreateProjectAsync(dto.Name, dto.Description, memberUids);
+
             return CreatedAtAction(nameof(GetProjectById), new { id }, new { id });
         }
+
 
         // Retrieves a specific project by Id
         [HttpGet("{id}")]
@@ -137,6 +145,15 @@ namespace Trackstar.Api.Controllers
 
             return Ok(projects);
         }
+
+        // Retrieves all projects for a specific user by UID
+        [HttpGet("all/projects/user/{uid}")]
+        public async Task<IActionResult> GetProjectsByUserUid(string uid)
+        {
+            var projects = await _firestore.GetProjectsByMemberUidAsync(uid);
+            return Ok(projects);
+        }
+
 
 
 

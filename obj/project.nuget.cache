@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "MhG3pRlh2rE=",
+  "dgSpecHash": "CxljCG0iKsc=",
   "success": true,
-  "projectFilePath": "C:\\Users\\jarry\\source\\repos\\TrackstarApi\\Trackstar.Api.csproj",
+  "projectFilePath": "C:\\Users\\jarry\\AndroidStudioProjects\\Cloned PROG7314\\TrackstarApi\\Trackstar.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\jarry\\.nuget\\packages\\firebaseadmin\\3.4.0\\firebaseadmin.3.4.0.nupkg.sha512",
     "C:\\Users\\jarry\\.nuget\\packages\\google.api.commonprotos\\2.16.0\\google.api.commonprotos.2.16.0.nupkg.sha512",
